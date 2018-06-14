@@ -25,6 +25,7 @@ import des, md4, utils
 #8 byte plaintext is encrypted with each key and the resulting 24
 #bytes are stored in the result array
 
+
 def calc_resp(keys_str, plain_text):
     "keys_str - hashed password"
     "plain_text - nonce from server"
@@ -40,6 +41,7 @@ def calc_resp(keys_str, plain_text):
 
     return res
 
+
 #---------------------------------------------------------------------
 def create_LM_hashed_password(passwd):
     "setup LanManager password"
@@ -51,7 +53,8 @@ def create_LM_hashed_password(passwd):
 
     if len(passwd) < 14:
         lm_pw = passwd + lm_pw[len(passwd) - 14:]
-    else: lm_pw = passwd[0:14]
+    else:
+        lm_pw = passwd[0:14]
 
     # do hash
 
@@ -69,6 +72,8 @@ def create_LM_hashed_password(passwd):
     res = res + '\000\000\000\000\000'
 
     return res
+
+
 #---------------------------------------------------------------------
 def create_NT_hashed_password(passwd):
     "create NT hashed password"
@@ -86,4 +91,3 @@ def create_NT_hashed_password(passwd):
     res = res + '\000\000\000\000\000'
 
     return res
-

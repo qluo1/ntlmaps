@@ -21,6 +21,7 @@ import string, urlparse
 
 http_debug_file_name = 'http.debug'
 
+
 #-----------------------------------------------------------------------
 # tests client's header for correctness
 def test_client_http_header(header_str):
@@ -42,13 +43,14 @@ def test_server_http_header(header_str):
     ""
     response = string.split(header_str, '\012')[0]
     parts = string.split(response)
-    
+
     # we have to have at least 2 words in the response
     # poor check
     if len(parts) < 2:
         return 0
     else:
         return 1
+
 
 #-----------------------------------------------------------------------
 def extract_http_header_str(buffer):
@@ -65,13 +67,14 @@ def extract_http_header_str(buffer):
         delimiter = '\012\012'
         header_end = string.find(t, delimiter)
 
-    if header_end >=0:
+    if header_end >= 0:
         # we have found it, possibly
         ld = len(delimiter)
         header_str = t[0:header_end + ld]
 
         # Let's check if it is a proper header
-        if test_server_http_header(header_str) or test_client_http_header(header_str):
+        if test_server_http_header(header_str) or test_client_http_header(
+                header_str):
             # if yes then let's do our work
             if (header_end + ld) >= len(t):
                 rest_str = ''
@@ -91,6 +94,7 @@ def extract_http_header_str(buffer):
 
     return (header_str, rest_str)
 
+
 #-----------------------------------------------------------------------
 def extract_server_header(buffer):
     ""
@@ -102,6 +106,7 @@ def extract_server_header(buffer):
 
     return (header_obj, rest_str)
 
+
 #-----------------------------------------------------------------------
 def extract_client_header(buffer):
     ""
@@ -112,6 +117,7 @@ def extract_client_header(buffer):
         header_obj = None
 
     return (header_obj, rest_str)
+
 
 #-----------------------------------------------------------------------
 def capitalize_value_name(str):
@@ -170,7 +176,6 @@ class HTTP_HEAD:
         self.params = params
         self.order_list = order_list
 
-
     #-------------------------------
     def debug(self, message):
         ""
@@ -190,7 +195,6 @@ class HTTP_HEAD:
         ""
         import copy
         return copy.deepcopy(self)
-
 
     #-------------------------------
     def get_param_values(self, param_name):
@@ -240,7 +244,8 @@ class HTTP_HEAD:
             if self.params.has_key(i):
                 if i == 'cookie':
                     for k in self.params[i]:
-                        cookies = cookies + capitalize_value_name(i) + ': ' + k + '\n'
+                        cookies = cookies + capitalize_value_name(
+                            i) + ': ' + k + '\n'
                 else:
                     for k in self.params[i]:
                         res = res + capitalize_value_name(i) + ': ' + k + '\n'
@@ -261,10 +266,12 @@ class HTTP_HEAD:
             if self.params.has_key(i):
                 if i == 'cookie':
                     for k in self.params[i]:
-                        cookies = cookies + capitalize_value_name(i) + ': ' + k + '\015\012'
+                        cookies = cookies + capitalize_value_name(
+                            i) + ': ' + k + '\015\012'
                 else:
                     for k in self.params[i]:
-                        res = res + capitalize_value_name(i) + ': ' + k + '\015\012'
+                        res = res + capitalize_value_name(
+                            i) + ': ' + k + '\015\012'
         res = res + cookies
         res = res + '\015\012'
         #"""
@@ -279,6 +286,7 @@ class HTTP_HEAD:
             return 1
         except:
             return 0
+
 
 #-----------------------------------------------------------------------
 class HTTP_SERVER_HEAD(HTTP_HEAD):
@@ -297,6 +305,7 @@ class HTTP_SERVER_HEAD(HTTP_HEAD):
     def get_http_message(self):
         ""
         return self.fields[2]
+
 
 #-----------------------------------------------------------------------
 class HTTP_CLIENT_HEAD(HTTP_HEAD):
@@ -360,4 +369,3 @@ class HTTP_CLIENT_HEAD(HTTP_HEAD):
             port = 80
 
         return server, port
-

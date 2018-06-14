@@ -17,8 +17,8 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #
 
-
 C = 0x1000000000L
+
 
 def norm(n):
     return n & 0xFFFFFFFFL
@@ -27,18 +27,23 @@ def norm(n):
 class U32:
     v = 0L
 
-    def __init__(self, value = 0):
+    def __init__(self, value=0):
         self.v = C + norm(abs(long(value)))
 
-    def set(self, value = 0):
+    def set(self, value=0):
         self.v = C + norm(abs(long(value)))
 
     def __repr__(self):
         return hex(norm(self.v))
 
-    def __long__(self): return long(norm(self.v))
-    def __int__(self): return int(norm(self.v))
-    def __chr__(self): return chr(norm(self.v))
+    def __long__(self):
+        return long(norm(self.v))
+
+    def __int__(self):
+        return int(norm(self.v))
+
+    def __chr__(self):
+        return chr(norm(self.v))
 
     def __add__(self, b):
         r = U32()
@@ -49,7 +54,8 @@ class U32:
         r = U32()
         if self.v < b.v:
             r.v = C + norm(0x100000000L - (b.v - self.v))
-        else: r.v = C + norm(self.v - b.v)
+        else:
+            r.v = C + norm(self.v - b.v)
         return r
 
     def __mul__(self, b):
@@ -67,9 +73,14 @@ class U32:
         r.v = C + (norm(self.v) % norm(b.v))
         return r
 
-    def __neg__(self): return U32(self.v)
-    def __pos__(self): return U32(self.v)
-    def __abs__(self): return U32(self.v)
+    def __neg__(self):
+        return U32(self.v)
+
+    def __pos__(self):
+        return U32(self.v)
+
+    def __abs__(self):
+        return U32(self.v)
 
     def __invert__(self):
         r = U32()

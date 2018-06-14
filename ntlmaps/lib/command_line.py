@@ -20,14 +20,13 @@
 #
 import getopt
 
+
 def parse_command_line(cmdline):
     """ Parse command line into a tuple (except for the configuration file)
         NOTE: Must only contain the command-line options
     """
-    opts, values = getopt.getopt(cmdline,
-                                 '',
-                                 ['config=', 'domain=', 'username=', 'password=',
-                                 'port='])
+    opts, values = getopt.getopt(
+        cmdline, '', ['config=', 'domain=', 'username=', 'password=', 'port='])
 
     options = {}
     for opt in opts:

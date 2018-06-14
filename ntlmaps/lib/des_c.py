@@ -23,6 +23,7 @@ from U32 import U32
 #typedef unsigned char des_cblock[8];
 #define HDRSIZE 4
 
+
 def c2l(c):
     "char[4] to unsigned long"
     l = U32(c[0])
@@ -31,7 +32,8 @@ def c2l(c):
     l = l | (U32(c[3]) << 24)
     return l
 
-def c2ln(c,l1,l2,n):
+
+def c2ln(c, l1, l2, n):
     "char[n] to two unsigned long???"
     c = c + n
     l1, l2 = U32(0), U32(0)
@@ -62,6 +64,7 @@ def c2ln(c,l1,l2,n):
         l1 = l1 | U32(c[0])
     return (l1, l2)
 
+
 def l2c(l):
     "unsigned long to char[4]"
     c = []
@@ -71,6 +74,7 @@ def l2c(l):
     c.append(int((l >> 24) & U32(0xFF)))
     return c
 
+
 def n2l(c, l):
     "network to host long"
     l = U32(c[0] << 24)
@@ -79,18 +83,21 @@ def n2l(c, l):
     l = l | (U32(c[3]))
     return l
 
+
 def l2n(l, c):
     "host to network long"
     c = []
     c.append(int((l >> 24) & U32(0xFF)))
     c.append(int((l >> 16) & U32(0xFF)))
-    c.append(int((l >>  8) & U32(0xFF)))
-    c.append(int((l      ) & U32(0xFF)))
+    c.append(int((l >> 8) & U32(0xFF)))
+    c.append(int((l) & U32(0xFF)))
     return c
+
 
 def l2cn(l1, l2, c, n):
     ""
-    for i in range(n): c.append(0x00)
+    for i in range(n):
+        c.append(0x00)
     f = 0
     if f or (n == 8):
         c[7] = int((l2 >> 24) & U32(0xFF))
@@ -99,10 +106,10 @@ def l2cn(l1, l2, c, n):
         c[6] = int((l2 >> 16) & U32(0xFF))
         f = 1
     if f or (n == 6):
-        c[5] = int((l2 >>  8) & U32(0xFF))
+        c[5] = int((l2 >> 8) & U32(0xFF))
         f = 1
     if f or (n == 5):
-        c[4] = int((l2      ) & U32(0xFF))
+        c[4] = int((l2) & U32(0xFF))
         f = 1
     if f or (n == 4):
         c[3] = int((l1 >> 24) & U32(0xFF))
@@ -111,17 +118,19 @@ def l2cn(l1, l2, c, n):
         c[2] = int((l1 >> 16) & U32(0xFF))
         f = 1
     if f or (n == 2):
-        c[1] = int((l1 >>  8) & U32(0xFF))
+        c[1] = int((l1 >> 8) & U32(0xFF))
         f = 1
     if f or (n == 1):
-        c[0] = int((l1      ) & U32(0xFF))
+        c[0] = int((l1) & U32(0xFF))
         f = 1
     return c[:n]
+
 
 # array of data
 # static unsigned long des_SPtrans[8][64]={
 # static unsigned long des_skb[8][64]={
 from des_data import des_SPtrans, des_skb
+
 
 def D_ENCRYPT(tup, u, t, s):
     L, R, S = tup
@@ -141,7 +150,7 @@ def D_ENCRYPT(tup, u, t, s):
     return ((L, R, S), u, t, s)
 
 
-def PERM_OP (tup, n, m):
+def PERM_OP(tup, n, m):
     "tup - (a, b, t)"
     a, b, t = tup
     t = ((a >> n) ^ b) & m
@@ -149,22 +158,26 @@ def PERM_OP (tup, n, m):
     a = a ^ (t << n)
     return (a, b, t)
 
-def HPERM_OP (tup, n, m):
+
+def HPERM_OP(tup, n, m):
     "tup - (a, t)"
     a, t = tup
     t = ((a << (16 - n)) ^ a) & m
     a = a ^ t ^ (t >> (16 - n))
     return (a, t)
 
-shifts2 = [0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0]
+
+shifts2 = [0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0]
+
 
 class DES:
-    KeySched = None # des_key_schedule
+    KeySched = None  # des_key_schedule
 
     def __init__(self, key_str):
         # key - UChar[8]
         key = []
-        for i in key_str: key.append(ord(i))
+        for i in key_str:
+            key.append(ord(i))
         #print 'key:', key
         self.KeySched = des_set_key(key)
         #print 'schedule:', self.KeySched, len(self.KeySched)
@@ -172,25 +185,25 @@ class DES:
     def decrypt(self, str):
         # block - UChar[]
         block = []
-        for i in str: block.append(ord(i))
+        for i in str:
+            block.append(ord(i))
         #print block
         block = des_ecb_encrypt(block, self.KeySched, 0)
         res = ''
-        for i in block: res = res + (chr(i))
+        for i in block:
+            res = res + (chr(i))
         return res
 
     def encrypt(self, str):
         # block - UChar[]
         block = []
-        for i in str: block.append(ord(i))
+        for i in str:
+            block.append(ord(i))
         block = des_ecb_encrypt(block, self.KeySched, 1)
         res = ''
-        for i in block: res = res + (chr(i))
+        for i in block:
+            res = res + (chr(i))
         return res
-
-
-
-
 
 
 #------------------------
@@ -208,19 +221,19 @@ def des_encript(input, ks, encrypt):
     t = U32(0)
     u = U32(0)
 
-    r, l, t = PERM_OP((r, l, t),  4, U32(0x0f0f0f0fL))
+    r, l, t = PERM_OP((r, l, t), 4, U32(0x0f0f0f0fL))
     l, r, t = PERM_OP((l, r, t), 16, U32(0x0000ffffL))
-    r, l, t = PERM_OP((r, l, t),  2, U32(0x33333333L))
-    l, r, t = PERM_OP((l, r, t),  8, U32(0x00ff00ffL))
-    r, l, t = PERM_OP((r, l, t),  1, U32(0x55555555L))
+    r, l, t = PERM_OP((r, l, t), 2, U32(0x33333333L))
+    l, r, t = PERM_OP((l, r, t), 8, U32(0x00ff00ffL))
+    r, l, t = PERM_OP((r, l, t), 1, U32(0x55555555L))
 
-    t = (r << 1)|(r >> 31)
-    r = (l << 1)|(l >> 31)
+    t = (r << 1) | (r >> 31)
+    r = (l << 1) | (l >> 31)
     l = t
 
-    s = ks # ???????????????
+    s = ks  # ???????????????
     #print l, r
-    if(encrypt):
+    if (encrypt):
         for i in range(0, 32, 4):
             rtup, u, t, s = D_ENCRYPT((l, r, i + 0), u, t, s)
             l = rtup[0]
@@ -237,19 +250,20 @@ def des_encript(input, ks, encrypt):
             r = rtup[0]
             l = rtup[1]
     #print l, r
-    l = (l >> 1)|(l << 31)
-    r = (r >> 1)|(r << 31)
+    l = (l >> 1) | (l << 31)
+    r = (r >> 1) | (r << 31)
 
-    r, l, t = PERM_OP((r, l, t),  1, U32(0x55555555L))
-    l, r, t = PERM_OP((l, r, t),  8, U32(0x00ff00ffL))
-    r, l, t = PERM_OP((r, l, t),  2, U32(0x33333333L))
+    r, l, t = PERM_OP((r, l, t), 1, U32(0x55555555L))
+    l, r, t = PERM_OP((l, r, t), 8, U32(0x00ff00ffL))
+    r, l, t = PERM_OP((r, l, t), 2, U32(0x33333333L))
     l, r, t = PERM_OP((l, r, t), 16, U32(0x0000ffffL))
-    r, l, t = PERM_OP((r, l, t),  4, U32(0x0f0f0f0fL))
+    r, l, t = PERM_OP((r, l, t), 4, U32(0x0f0f0f0fL))
 
     output = [l]
     output.append(r)
     l, r, t, u = U32(0), U32(0), U32(0), U32(0)
     return output
+
 
 def des_ecb_encrypt(input, ks, encrypt):
     # input - des_cblock - UChar[8]
@@ -272,6 +286,7 @@ def des_ecb_encrypt(input, ks, encrypt):
     #print output
     l0, l1, ll[0], ll[1] = U32(0), U32(0), U32(0), U32(0)
     return output
+
 
 def des_set_key(key):
     # key - des_cblock - UChar[8]
@@ -297,16 +312,17 @@ def des_set_key(key):
     c, d, t = PERM_OP((c, d, t), 8, U32(0x00ff00ffL))
     d, c, t = PERM_OP((d, c, t), 1, U32(0x55555555L))
 
-    d = (((d & U32(0x000000ffL)) << 16)|(d & U32(0x0000ff00L))|((d & U32(0x00ff0000L)) >> 16)|((c & U32(0xf0000000L)) >> 4))
-    c  = c & U32(0x0fffffffL)
+    d = (((d & U32(0x000000ffL)) << 16) | (d & U32(0x0000ff00L)) |
+         ((d & U32(0x00ff0000L)) >> 16) | ((c & U32(0xf0000000L)) >> 4))
+    c = c & U32(0x0fffffffL)
 
     for i in range(16):
         if (shifts2[i]):
-            c = ((c >> 2)|(c << 26))
-            d = ((d >> 2)|(d << 26))
+            c = ((c >> 2) | (c << 26))
+            d = ((d >> 2) | (d << 26))
         else:
-            c = ((c >> 1)|(c << 27))
-            d = ((d >> 1)|(d << 27))
+            c = ((c >> 1) | (c << 27))
+            d = ((d >> 1) | (d << 27))
         c = c & U32(0x0fffffffL)
         d = d & U32(0x0fffffffL)
 
@@ -321,9 +337,9 @@ def des_set_key(key):
             des_skb[7][int(((d>>21) & U32(0x0f))|((d>>22) & U32(0x30)))]
         #print s, t
 
-        k.append(((t << 16)|(s & U32(0x0000ffffL))) & U32(0xffffffffL))
-        s = ((s >> 16)|(t & U32(0xffff0000L)))
-        s = (s << 4)|(s >> 28)
+        k.append(((t << 16) | (s & U32(0x0000ffffL))) & U32(0xffffffffL))
+        s = ((s >> 16) | (t & U32(0xffff0000L)))
+        s = (s << 4) | (s >> 28)
         k.append(s & U32(0xffffffffL))
 
     schedule = k

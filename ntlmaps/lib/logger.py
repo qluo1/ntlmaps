@@ -19,12 +19,13 @@
 
 import time
 
+
 #-----------------------------------------------------------------------
 class Logger:
     "provides facility for loggin messages during runtime"
 
     #-----------------------------------------------------------------------
-    def __init__(self, log_name, debug_level = 1):
+    def __init__(self, log_name, debug_level=1):
         "logger init routine"
 
         self.log_name = log_name

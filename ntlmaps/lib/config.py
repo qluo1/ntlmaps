@@ -19,6 +19,8 @@
 
 import string
 import getopt
+
+
 #-------------------------------------------------------------------------------------------
 def read_config(fname):
     ""
@@ -39,13 +41,16 @@ def read_config(fname):
             else:
                 parts = string.split(t, ':')
                 if len(parts) > 1:
-                    res[section_name][string.strip(parts[0])] = string.strip(parts[1])
+                    res[section_name][string.strip(parts[0])] = string.strip(
+                        parts[1])
 
     return res
+
 
 #-------------------------------------------------------------------------------------------
 # Thanks Janek Schwarz <j.schwarz@i-change.de> for this addition.
 # Tony Heupel --- not calling this -- moved to command_line.py
+
 
 def findConfigFileNameInArgv(argv, configFileDir=''):
     """ Resolves configuration file. Resolution goes as follows:
@@ -53,7 +58,7 @@ def findConfigFileNameInArgv(argv, configFileDir=''):
     the config file. Otherwise the function falls back to
     'server.cfg' in the current directory. """
 
-    configFileName = configFileDir+'server.cfg'
+    configFileName = configFileDir + 'server.cfg'
 
     optionsList, notUsedArguments = getopt.getopt(argv[1:], 'c:')
 

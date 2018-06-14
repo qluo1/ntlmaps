@@ -22,6 +22,7 @@ import logger, http_header, utils
 import ntlm_auth, basic_auth
 import proxy_client
 
+
 class www_HTTP_Client(proxy_client.proxy_HTTP_Client):
 
     #-------------------------------------------------
@@ -55,13 +56,18 @@ class www_HTTP_Client(proxy_client.proxy_HTTP_Client):
         if self.config.has_key('CLIENT_HEADER'):
             for i in self.config['CLIENT_HEADER'].keys():
                 self.client_head_obj.del_param(i)
-                self.client_head_obj.add_param_value(i, self.config['CLIENT_HEADER'][i])
+                self.client_head_obj.add_param_value(
+                    i, self.config['CLIENT_HEADER'][i])
             self.logger.log('Done.\n')
             # self.logger.log('*** New client header:\n=====\n' + self.client_head_obj.__repr__())
         else:
-            self.logger.log('No need.\n*** There is no "CLIENT_HEADER" section in server.cfg.\n')
+            self.logger.log(
+                'No need.\n*** There is no "CLIENT_HEADER" section in server.cfg.\n'
+            )
 
-        self.logger.log("*** Working as selfcontained proxy, then have to change client header.\n")
+        self.logger.log(
+            "*** Working as selfcontained proxy, then have to change client header.\n"
+        )
         self.logger.log("*** Remake url format in client header...")
         self.client_head_obj.make_right_header()
         self.logger.log('Done.\n')
@@ -71,7 +77,8 @@ class www_HTTP_Client(proxy_client.proxy_HTTP_Client):
         # Code which converts 'Proxy-Connection' value to 'Connection'
         # I am not sure that it is needed at all
         # May be it is just useless activity
-        self.logger.log("*** Looking for 'Proxy-Connection' in client header...")
+        self.logger.log(
+            "*** Looking for 'Proxy-Connection' in client header...")
         pconnection = self.client_head_obj.get_param_values('Proxy-Connection')
         if pconnection:
             # if we have 'Proxy-Connection'
@@ -79,15 +86,21 @@ class www_HTTP_Client(proxy_client.proxy_HTTP_Client):
             wconnection = self.client_head_obj.get_param_values('Connection')
             if wconnection:
                 # if we have 'Connection' as well
-                self.logger.log("*** There is a 'Connection' value in the header.\n")
+                self.logger.log(
+                    "*** There is a 'Connection' value in the header.\n")
                 self.client_head_obj.del_param('Proxy-Connection')
-                self.logger.log("*** Just killed 'Proxy-Connection' value in the header.\n")
+                self.logger.log(
+                    "*** Just killed 'Proxy-Connection' value in the header.\n"
+                )
             else:
-                self.logger.log("*** There is no 'Connection' value in the header.\n")
+                self.logger.log(
+                    "*** There is no 'Connection' value in the header.\n")
                 self.client_head_obj.del_param('Proxy-Connection')
                 for i in pconnection:
                     self.client_head_obj.add_param_value('Connection', i)
-                self.logger.log("*** Changed 'Proxy-Connection' to 'Connection' header value.\n")
+                self.logger.log(
+                    "*** Changed 'Proxy-Connection' to 'Connection' header value.\n"
+                )
 
         else:
             self.logger.log("there aren't any.\n")
@@ -95,7 +108,8 @@ class www_HTTP_Client(proxy_client.proxy_HTTP_Client):
         # End of doubtable code.
 
         # Show reworked header.
-        self.logger.log('*** New client header:\n=====\n' + self.client_head_obj.__repr__())
+        self.logger.log('*** New client header:\n=====\n' +
+                        self.client_head_obj.__repr__())
 
     #-----------------------------------------------------------------------
     def check_connected_remote_server(self):
@@ -104,7 +118,7 @@ class www_HTTP_Client(proxy_client.proxy_HTTP_Client):
         rs, rsp = self.client_head_obj.get_http_server()
         if self.current_rserver_net_location != '%s:%d' % (rs, rsp):
             # if current connection is not we need then close it.
-            self.logger.log('*** We had wrong connection for new request so we have to close it.\n')
+            self.logger.log(
+                '*** We had wrong connection for new request so we have to close it.\n'
+            )
             self.close_rserver()
-
-

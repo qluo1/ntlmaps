@@ -19,6 +19,7 @@
 
 import base64
 
+
 class basic_auther:
 
     #-----------------------------------------------------------------------
@@ -51,12 +52,15 @@ class basic_auther:
         basic_string = self.build_credentials(connection.config['GENERAL'])
 
         tmp_client_head_obj = connection.client_head_obj.copy()
-        tmp_client_head_obj.replace_param_value('Proxy-Authorization', 'Basic ' + basic_sting)
+        tmp_client_head_obj.replace_param_value('Proxy-Authorization',
+                                                'Basic ' + basic_sting)
 
-        connection.logger.log('*** Sending client header (not body) with Basic auth...')
+        connection.logger.log(
+            '*** Sending client header (not body) with Basic auth...')
         tmp_client_head_obj.send(connection.rserver_socket)
         connection.logger.log('Done.\n')
-        connection.logger.log('*** New client header with Basic auth:\n=====\n' + tmp_client_head_obj.__repr__())
+        connection.logger.log('*** New client header with Basic auth:\n=====\n'
+                              + tmp_client_head_obj.__repr__())
 
         # upon exit all the remote server variables are reset
         # so new remote server response will be taken by the usual way in connection.run()
@@ -77,14 +81,16 @@ class basic_auther:
         basic_string = self.build_credentials(connection.config['GENERAL'])
 
         tmp_client_head_obj = connection.client_head_obj.copy()
-        tmp_client_head_obj.replace_param_value('Authorization', 'Basic ' + basic_sting)
+        tmp_client_head_obj.replace_param_value('Authorization',
+                                                'Basic ' + basic_sting)
 
-        connection.logger.log('*** Sending client header (not body) with Basic auth...')
+        connection.logger.log(
+            '*** Sending client header (not body) with Basic auth...')
         tmp_client_head_obj.send(connection.rserver_socket)
         connection.logger.log('Done.\n')
-        connection.logger.log('*** New client header with Basic auth:\n=====\n' + tmp_client_head_obj.__repr__())
+        connection.logger.log('*** New client header with Basic auth:\n=====\n'
+                              + tmp_client_head_obj.__repr__())
 
         # upon exit all the remote server variables are reset
         # so new remote server response will be taken by the usual way in connection.run()
         connection.logger.log('*** End of Basic authorization process.\n')
-
