@@ -114,22 +114,24 @@ class proxy_HTTP_Client:
 
             # client part
             self.run_client_loop()
-            # check client header for direct access
-            host, port = self.client_head_obj.get_http_server()
-            url = self.client_head_obj.get_http_url()
-            self.logger.log("client loop -> host: %s, port: %s, url: %s\n" %
-                            (host, port, url))
 
             # default using upstream proxy
             connect_rserver = self.connect_rserver
-            direct_cfg = self.config["DIRECT"]
-            direct_domain = direct_cfg["DOMAIN"]
-            direct_hosts = direct_cfg["HOSTS"].split()
-            self.logger.log("domain %s, hosts: %s\n" % (direct_domain, direct_hosts))
-            # using direct connect
-            if host.endswith(direct_domain) or host in direct_hosts:
-                self.logger.log("connect direct\n")
-                connect_rserver = self.connect_rserver_direct
+            # check client header for direct access
+            if self.client_head_obj:
+                host, port = self.client_head_obj.get_http_server()
+                url = self.client_head_obj.get_http_url()
+                self.logger.log("client loop -> host: %s, port: %s, url: %s\n" %
+                                (host, port, url))
+
+                direct_cfg = self.config["DIRECT"]
+                direct_domain = direct_cfg["DOMAIN"]
+                direct_hosts = direct_cfg["HOSTS"].split()
+                self.logger.log("domain %s, hosts: %s\n" % (direct_domain, direct_hosts))
+                # using direct connect
+                if host.endswith(direct_domain) or host in direct_hosts:
+                    self.logger.log("connect direct\n")
+                    connect_rserver = self.connect_rserver_direct
 
             if self.tunnel_mode: self.tunnel_client_data()
 
