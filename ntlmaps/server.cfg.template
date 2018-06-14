@@ -9,9 +9,11 @@ LISTEN_PORT:5865
 # APS will detect when one fails and automatically fail-over to the next. EG:
 #PARENT_PROXY:first_proxy second_proxy third_proxy
 # And NOTE that NTLM cannot pass through another proxy server.
-PARENT_PROXY:
+#PARENT_PROXY:
+#PARENT_PROXY:cfcdc2.web.gs.com
+PARENT_PROXY:asia-proxy-vip.web.gs.com cfcdc2.web.gs.com
 
-PARENT_PROXY_PORT:
+PARENT_PROXY_PORT:85
 
 # APS will poll the upstream proxy and attempt to fail-over to a new one if it doesn't
 # get a response within an appropriate time frame.  The amount of time that it will
@@ -30,7 +32,7 @@ ALLOW_EXTERNAL_CLIENTS:0
 FRIENDLY_IPS:
 
 # Requested URLs are written to "url.log" file. May be useful.
-URL_LOG:0
+URL_LOG:1
 
 # When a network service listens for connections, there is a maximum number of connection
 # attempts to that service that the underlying OS will allow to backlog waiting for a response
@@ -83,7 +85,8 @@ NT_HOSTNAME:
 
 # Windows Domain.
 # NOTE: it is not full qualified internet domain, but windows network domain.
-NT_DOMAIN:
+#NT_DOMAIN:
+NT_DOMAIN:FIRMWIDE
 
 # What user's name to use during authorization. It may differ form real current username.
 # If you enable NTLM_TO_BASIC, below, you can either leave this blank or simply
@@ -95,6 +98,7 @@ USER:
 # hash it out, and you *won't* be prompted for a password at start time.
 PASSWORD:
 
+
 # These two options replace old FULL_NTLM option.
 # NTLM authentication consists virtually of two parts: LM and NT. Windows95/98 use
 # only LM part, WindowsNT/2000 can use NT and LM or just NT part.
@@ -105,13 +109,14 @@ PASSWORD:
 # 0, 0 is an illegal combination
 # NOTE: if you change these options then you have to setup flag option accordingly.
 LM_PART:1
-NT_PART:0
+NT_PART:1
 
 # Highly experimental option. See research.txt for details.
 # LM - 06820000
 # NT - 05820000
 # LM + NT - 07820000
-NTLM_FLAGS: 06820000
+#NTLM_FLAGS: 06820000
+NTLM_FLAGS: 07820000
 
 # This option makes APS try to translate NTLM authentication to very usual "Basic"
 # scheme. Almost all http clients know it. With this option set to 1 user will be requested
@@ -123,7 +128,8 @@ NTLM_FLAGS: 06820000
 # NOTE2: With debug:1 basic username/password will be written in log file in clear
 #        text format. I could try hide it, but the basic scheme is so weak that anybody
 #        who had access to APS would be able to get it.
-NTLM_TO_BASIC:1
+#NTLM_TO_BASIC:1
+NTLM_TO_BASIC:0
 
 #========================================================================
 [DEBUG]
@@ -141,3 +147,7 @@ SCR_DEBUG:0
 # into *.auth logs. Also see research.txt.
 AUTH_DEBUG:0
 
+
+[DIRECT]
+DOMAIN:.gs.com
+HOSTS:127.0.0.1 localhost

@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /bin/env python
 
 # This file is part of 'NTLM Authorization Proxy Server'
 # Copyright 2001 Dmitry A. Rozmanov <dima@xenon.spb.ru>
@@ -27,6 +27,7 @@ import server, config, config_affairs
 
 import command_line
 
+
 def override_config_with_command_line_options(conf, options):
     if options.has_key('port'):
         conf['GENERAL']['LISTEN_PORT'] = options['port']
@@ -38,10 +39,8 @@ def override_config_with_command_line_options(conf, options):
         # force it off
         conf['NTLM_AUTH']['NTLM_TO_BASIC'] = 0
 
-
     if options.has_key('password'):
         conf['NTLM_AUTH']['PASSWORD'] = options['password']
-
 
     if options.has_key('domain'):
         conf['NTLM_AUTH']['NT_DOMAIN'] = options['domain']
@@ -54,11 +53,11 @@ def get_config_filename(options):
     else:
         config_file += 'server.cfg'
 
+    print("config: %s" % config_file)
     return config_file
 
 
-
-#--------------------------------------------------------------
+# --------------------------------------------------------------
 # config affairs
 # look for default config name in lib/config.py
 args = sys.argv
@@ -72,13 +71,12 @@ override_config_with_command_line_options(conf, options)
 
 conf['GENERAL']['VERSION'] = '0.9.9.0.2'
 
-print 'NTLM authorization Proxy Server v%s' % conf['GENERAL']['VERSION']
-print 'Copyright (C) 2001-2012 by Tony Heupel, Dmitry Rozmanov, and others.'
+print('NTLM authorization Proxy Server v%s' % conf['GENERAL']['VERSION'])
+print('Copyright (C) 2001-2012 by Tony Heupel, Dmitry Rozmanov, and others.')
 
 config = config_affairs.arrange(conf)
 
-
-#--------------------------------------------------------------
+# --------------------------------------------------------------
 # let's run it
 serv = server.AuthProxyServer(config)
 serv.run()

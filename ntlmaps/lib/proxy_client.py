@@ -24,7 +24,7 @@ class proxy_HTTP_Client:
 
     #-----------------------------------------------------------------------
     def __init__(self, client_socket, address, config):
-        ""     
+        ""
         self.config = config
         self.ntlm_auther = ntlm_auth.ntlm_auther()
         # experimental code
@@ -78,7 +78,7 @@ class proxy_HTTP_Client:
 
         # init record to debug_log
         self.logger.log('%s Version %s\n' % (time.strftime('%d.%m.%Y %H:%M:%S', time.localtime(time.time())), self.config['GENERAL']['VERSION']))
-    
+
     #-----------------------------------------------------------------------
     def run(self):
         ""
@@ -114,6 +114,22 @@ class proxy_HTTP_Client:
 
             # client part
             self.run_client_loop()
+            # check client header for direct access
+            host, port = self.client_head_obj.get_http_server()
+            url = self.client_head_obj.get_http_url()
+            self.logger.log("client loop -> host: %s, port: %s, url: %s\n" %
+                            (host, port, url))
+
+            # default using upstream proxy
+            connect_rserver = self.connect_rserver
+            direct_cfg = self.config["DIRECT"]
+            direct_domain = direct_cfg["DOMAIN"]
+            direct_hosts = direct_cfg["HOSTS"].split()
+            self.logger.log("domain %s, hosts: %s\n" % (direct_domain, direct_hosts))
+            # using direct connect
+            if host.endswith(direct_domain) or host in direct_hosts:
+                self.logger.log("connect direct\n")
+                connect_rserver = self.connect_rserver_direct
 
             if self.tunnel_mode: self.tunnel_client_data()
 
@@ -122,10 +138,10 @@ class proxy_HTTP_Client:
                     # if connected we have to check whether we are connected to the right host.
                     # if not then close connection
                     self.check_connected_remote_server()
-                #if self.rserver_socket_closed:
+
                 if self.rserver_socket_closed:
                     # connect remote server if we have not yet
-                    self.connect_rserver()
+                    connect_rserver()
 
                 self.log_url()
                 self.send_client_header()
@@ -584,6 +600,30 @@ class proxy_HTTP_Client:
             self.logger.log('Failed.\n')
             self.exit()
             thread.exit()
+    # -- connect server direct with upstream proxy ----
+    def connect_rserver_direct(self):
+        ""
+        self.logger.log('*** Connecting to remote server...')
+        self.first_run = 0
+
+        # we don't have proxy then we have to connect server by ourselves
+        rs, rsp = self.client_head_obj.get_http_server()
+
+        self.logger.log('(%s:%d)...' % (rs, rsp))
+
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((rs, rsp))
+            self.rserver_socket = s
+            self.rserver_socket_closed = 0
+            self.current_rserver_net_location = '%s:%d' % (rs, rsp)
+            self.logger.log('Done.\n')
+        except:
+            self.rserver_socket_closed = 1
+            self.logger.log('Failed.\n')
+            self.exit()
+            thread.exit()
+
 
     #-------------------------------------------------
     def close_rserver(self):
