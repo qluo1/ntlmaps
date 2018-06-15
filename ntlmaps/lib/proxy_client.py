@@ -135,7 +135,7 @@ class proxy_HTTP_Client:
                 host, port = self.client_head_obj.get_http_server()
                 url = self.client_head_obj.get_http_url()
                 self.logger.log(
-                    "client loop -> host: %s, port: %s, url: %s\n" %
+                    "check client connection -> host: %s, port: %s, url: %s\n" %
                     (host, port, url))
 
                 direct_cfg = self.config["DIRECT"]
