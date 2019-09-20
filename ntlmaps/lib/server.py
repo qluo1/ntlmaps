@@ -22,12 +22,16 @@ import signal
 import getpass
 import socket
 import thread
+import logging
 
 # local
 import proxy_client
 import www_client
 import monitor_upstream
 import ntlm_procs
+
+
+LOG = logging.getLogger(__name__)
 
 
 class AuthProxyServer:
@@ -88,6 +92,7 @@ class AuthProxyServer:
             s.listen(self.config["GENERAL"]["MAX_CONNECTION_BACKLOG"])
             try:
                 conn, addr = s.accept()
+                LOG.info("accept conn from: %s", addr)
                 if self.config["GENERAL"]["ALLOW_EXTERNAL_CLIENTS"]:
                     self.client_run(conn, addr)
                 else:
@@ -95,8 +100,9 @@ class AuthProxyServer:
                         self.client_run(conn, addr)
                     else:
                         conn.close()
-            except socket.error:
-                pass
+            except socket.error as e:
+                LOG.exception(e)
+
         s.close()
 
     def client_run(self, conn, addr):

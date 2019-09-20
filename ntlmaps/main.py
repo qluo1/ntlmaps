@@ -22,12 +22,49 @@
 
 import os
 import sys
+import logging
+
+# project
 import server
 import config
 import config_affairs
 import command_line
 
 cur_dir = os.path.dirname(os.path.abspath(__file__))
+
+LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO")
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "%(asctime)s %(levelname)s %(module)s:%(lineno)d %(process)d %(threadName)s %(message)s"
+        },
+        "simple": {"format": "%(levelname)s %(message)s"},
+    },
+    "handlers": {
+        "logfile": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "filename": os.path.join(cur_dir, "..", "ntlmaps.log"),
+            "level": LOG_LEVEL,
+            "when": "midnight",
+            "interval": 1,
+            "backupCount": 0,
+            "delay": True,
+            "formatter": "verbose",
+        },
+        "console": {
+            "level": "WARN",
+            "class": "logging.StreamHandler",
+            "formatter": "simple",
+        },
+    },
+    "loggers": {
+        "": {"handlers": ["logfile", "console"], "level": "DEBUG", "propagate": True}
+    },
+}
+# setup logging
+logging.config.dictConfig(LOGGING)
 
 
 def override_config_with_command_line_options(conf, options):
