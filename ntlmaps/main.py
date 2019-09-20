@@ -19,13 +19,16 @@
 # Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #
-from . import __init__
+# from . import __init__
 
+import os
 import sys
-
-import server, config, config_affairs
-
+import server
+import config
+import config_affairs
 import command_line
+
+cur_dir = os.path.dirname(os.path.abspath(__file__))
 
 
 def override_config_with_command_line_options(conf, options):
@@ -47,13 +50,16 @@ def override_config_with_command_line_options(conf, options):
 
 
 def get_config_filename(options):
-    config_file = __init__.ntlmaps_dir + "/"
-    if "config_path" in options and options["config_path"] != "":
-        config_file = options["config_path"]
-    else:
-        config_file += "server.cfg"
+    # default
+    config_file = cur_dir + "/server.cfg"
+    print(options)
+    if "config_file" in options and options["config_file"] != "":
+        config_file = options["config_file"]
 
-    print(("config: %s" % config_file))
+    print("config: %s" % config_file)
+    if not os.path.exists(config_file):
+        raise ValueError("config_file not found: {}".format(config_file))
+
     return config_file
 
 
