@@ -62,7 +62,6 @@ class AuthProxyServer:
             self.config["NTLM_AUTH"]["PASSWORD"]
         )
 
-    # --------------------------------------------------------------
     def run(self):
         signal.signal(signal.SIGINT, self.sigHandler)
         if (
@@ -100,7 +99,6 @@ class AuthProxyServer:
                 pass
         s.close()
 
-    # --------------------------------------------------------------
     def client_run(self, conn, addr):
         if self.config["GENERAL"]["PARENT_PROXY"]:
             # working with MS Proxy

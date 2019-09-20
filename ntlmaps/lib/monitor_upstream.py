@@ -18,25 +18,27 @@
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #
 
-import signal, httplib, time, socket, thread, os
+import signal
+import httplib
+import time
+import socket
+import thread
+import os
 
 
-#--------------------------------------------------------------
 class monitorThread:
-
-    #--------------------------------------------------------------
     def __init__(self, config, die_sig=signal.SIGINT):
         self.alive = 1
         self.config = config
         self.die_sig = die_sig
         self.threadsToKill = []
-        self.timeoutSeconds = self.config['GENERAL']['PARENT_PROXY_TIMEOUT']
+        self.timeoutSeconds = self.config["GENERAL"]["PARENT_PROXY_TIMEOUT"]
 
-    #--------------------------------------------------------------
     def run(self):
         while self.alive:
-            self.alarmThread = timerThread(self.timeoutSeconds, self.alive,
-                                           self.die_sig)
+            self.alarmThread = timerThread(
+                self.timeoutSeconds, self.alive, self.die_sig
+            )
             thread.start_new_thread(self.alarmThread.run, ())
             # We poll the current proxy for responsiveness...
             # TODO: add logger entries for all these exceptions
@@ -67,12 +69,13 @@ class monitorThread:
         the long term it will make it easier to fork off a Python 1.5.2 maintenance
         version of ntlmaps and just keep the pure Python 2.x optimised version.
         """
-        if 'HTTPConnection' in dir(httplib):
+        if "HTTPConnection" in dir(httplib):
             # Python 2.x
             try:
                 conn = httplib.HTTPConnection(
-                    self.config['GENERAL']['PARENT_PROXY'],
-                    self.config['GENERAL']['PARENT_PROXY_PORT'])
+                    self.config["GENERAL"]["PARENT_PROXY"],
+                    self.config["GENERAL"]["PARENT_PROXY_PORT"],
+                )
                 try:
                     conn.request("GET", "/")
                     try:
@@ -83,8 +86,10 @@ class monitorThread:
                         except AssertionError:  # Yup, got a wacky response
                             self.die()
                         conn.close()
-                    except (AttributeError,
-                            httplib.BadStatusLine):  # Didn't somehow connect?
+                    except (
+                        AttributeError,
+                        httplib.BadStatusLine,
+                    ):  # Didn't somehow connect?
                         self.die()
                 except socket.error:  # Service not running/listening on specified port?
                     self.die()
@@ -96,10 +101,11 @@ class monitorThread:
                 # This call fails far more regularly than it should.  Best to move to
                 # using Python 2.x
                 conn = httplib.HTTP(
-                    self.config['GENERAL']['PARENT_PROXY'],
-                    self.config['GENERAL']['PARENT_PROXY_PORT'])
+                    self.config["GENERAL"]["PARENT_PROXY"],
+                    self.config["GENERAL"]["PARENT_PROXY_PORT"],
+                )
                 try:
-                    conn.putrequest('GET', '/')
+                    conn.putrequest("GET", "/")
                     conn.endheaders()
                     try:
                         errcode, errmsg, headers = conn.getreply()
@@ -119,20 +125,17 @@ class monitorThread:
         return
 
 
-#--------------------------------------------------------------
 class timerThread:
     """
     Used in place of SIGALRM as Windows doesn't support it.
     """
 
-    #--------------------------------------------------------------
     def __init__(self, seconds, parentAlive, die_sig=signal.SIGINT):
         self.seconds = seconds
         self.parentAlive = parentAlive
         self.die_sig = die_sig
         self.alive = 1
 
-    #--------------------------------------------------------------
     def run(self):
         time.sleep(self.seconds)
         if self.alive and self.parentAlive:
