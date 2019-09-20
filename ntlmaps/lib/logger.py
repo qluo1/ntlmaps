@@ -20,27 +20,24 @@
 import time
 
 
-#-----------------------------------------------------------------------
 class Logger:
     "provides facility for loggin messages during runtime"
 
-    #-----------------------------------------------------------------------
     def __init__(self, log_name, debug_level=1):
         "logger init routine"
 
         self.log_name = log_name
         self.debug_level = debug_level
 
-    #-----------------------------------------------------------------------
     def log(self, str):
         "writes string to log file"
 
         if self.debug_level:
 
-            tstr = ''
+            tstr = ""
             # tstr = '(' + time.strftime('%H:%M:%S', time.localtime(time.time())) + ') '
             # time.clock()
 
-            fptr = open(self.log_name, 'a')
+            fptr = open(self.log_name, "a")
             fptr.write(tstr + str)
             fptr.close()
