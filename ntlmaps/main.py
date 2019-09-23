@@ -23,6 +23,7 @@
 import os
 import sys
 import logging
+import logging.config
 
 # project
 import server

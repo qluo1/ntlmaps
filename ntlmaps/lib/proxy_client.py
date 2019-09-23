@@ -22,6 +22,7 @@ import socket
 import thread
 import select
 import time
+import logging
 
 # local
 import logger
@@ -30,10 +31,13 @@ import utils
 import ntlm_auth
 import basic_auth
 
+LOG = logging.getLogger(__name__)
+
 
 class proxy_HTTP_Client:
     def __init__(self, client_socket, address, config):
         ""
+        LOG.info("handling client from %s", address)
         self.config = config
         self.ntlm_auther = ntlm_auth.ntlm_auther()
         # experimental code
@@ -151,6 +155,9 @@ class proxy_HTTP_Client:
                     "check client connection -> host: %s, port: %s, url: %s\n"
                     % (host, port, url)
                 )
+                LOG.info(
+                    "client connection host: %s, port: %s, url: %s", host, port, url
+                )
 
                 direct_cfg = self.config["DIRECT"]
                 direct_domain = direct_cfg["DOMAIN"]
@@ -161,6 +168,7 @@ class proxy_HTTP_Client:
                 # using direct connect
                 if host.endswith(direct_domain) or host in direct_hosts:
                     self.logger.log("connect direct\n")
+                    LOG.info("connect direct to host: %s", host)
                     connect_rserver = self.connect_rserver_direct
 
             if self.tunnel_mode:
@@ -177,15 +185,33 @@ class proxy_HTTP_Client:
                     connect_rserver()
 
                 self.log_url()
-                self.send_client_header()
+
+                # handle HTTP/connect
+                c_method = self.client_head_obj.get_http_method()
+                if (
+                    c_method == "CONNECT"
+                    and connect_rserver == self.connect_rserver_direct
+                ):
+                    # ok = self.client_head_obj.send(
+                    ok = http_header.HTTP_HEAD("HTTP/1.1 200 Connection established")
+                    LOG.info("send connect %s", ok)
+                    if ok:
+                        self.client_header_sent = 1
+                else:
+                    self.send_client_header()
 
             if self.client_header_sent and (not self.client_data_sent):
                 self.send_client_data()
+                self.rserver_data_sent = 1
 
             if self.client_data_sent and self.rserver_data_sent:
                 # NOTE: we need to know if the request method is HEAD or CONNECT, so we cannot
                 # proceed to the next request header until response is not worked out
-                self.check_tunnel_mode()
+                p_code = self.rserver_head_obj.get_http_code()
+                if p_code == 200:
+                    self.tunnel_mode = 1
+
+                # self.check_tunnel_mode()
                 self.reset_client()
 
             if self.config["DEBUG"]["SCR_DEBUG"]:
@@ -222,7 +248,7 @@ class proxy_HTTP_Client:
     def fix_client_header(self):
         ""
         self.logger.log("*** Replacing values in client header...")
-        if self.config.has_key("CLIENT_HEADER"):
+        if "CLIENT_HEADER" in self.config:
             for i in self.config["CLIENT_HEADER"].keys():
                 self.client_head_obj.del_param(i)
                 self.client_head_obj.add_param_value(i, self.config["CLIENT_HEADER"][i])
@@ -245,7 +271,8 @@ class proxy_HTTP_Client:
         if res[0]:
             try:
                 socket_data = self.rserver_socket.recv(4096)
-            except:
+            except Exception as e:
+                LOG.exception(e)
                 socket_data = ""
                 self.logger.log("*** Exception in remote server recv() happend.\n")
 
@@ -299,12 +326,14 @@ class proxy_HTTP_Client:
         ""
         try:
             res = select.select([self.client_socket.fileno()], [], [], 0.0)
-        except (socket.error, select.error, ValueError):
+        except (socket.error, select.error, ValueError) as e:
+            LOG.exception(e)
             thread.exit()
         if res[0]:
             try:
                 socket_data = self.client_socket.recv(4096)
-            except:
+            except Exception as e:
+                LOG.exception(e)
                 socket_data = ""
                 self.logger.log("*** Exception in client recv() happend.\n")
 
@@ -316,6 +345,7 @@ class proxy_HTTP_Client:
             socket_data = ""
 
         if socket_data:
+            LOG.info("client socket_data: \n%s", socket_data)
             self.logger_bin_client.log(socket_data)
 
         self.client_buffer = self.client_buffer + socket_data
@@ -439,7 +469,8 @@ class proxy_HTTP_Client:
                         "*** Sent ALL the data from client to remote server. (Client buffer - %d bytes)\n"
                         % len(self.client_buffer)
                     )
-            except:
+            except Exception as e:
+                LOG.exception(e)
                 self.logger.log(
                     "*** Exception during sending data to remote server. Remote server closed connection.\n"
                 )
@@ -502,7 +533,8 @@ class proxy_HTTP_Client:
             try:
                 self.client_socket.send(data)
                 self.logger.log("*** Tunnelled %d bytes to client.\n" % len(data))
-            except:
+            except Exception as e:
+                LOG.exception(e)
                 self.logger.log(
                     "*** Exception by tunnelling data to client. Client closed connection.\n"
                 )
@@ -599,7 +631,8 @@ class proxy_HTTP_Client:
                 if self.client_data_length == 0:
                     self.client_all_got = 1
                     self.client_data_sent = 1
-            except:
+            except Exception as e:
+                LOG.exception(e)
                 self.client_data_length = 0
                 self.logger.log(
                     "*** Could not find client 'Content-Length' parameter.\n"
@@ -625,6 +658,7 @@ class proxy_HTTP_Client:
         ""
         p_code = self.rserver_head_obj.get_http_code()
         c_request = self.client_head_obj.get_http_method()
+        LOG.info("check tunnel mode: %s, %s", p_code, c_request)
         if c_request == "CONNECT" and p_code == "200":
             self.logger.log(
                 "*** Successful 'CONNECT' request detected. Going to tunnel mode.\n"
@@ -722,6 +756,8 @@ class proxy_HTTP_Client:
 
         self.logger.log("(%s:%d)..." % (rs, rsp))
 
+        LOG.info("connecting proxy server: %s:%d", rs, rsp)
+
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((rs, rsp))
@@ -729,7 +765,8 @@ class proxy_HTTP_Client:
             self.rserver_socket_closed = 0
             self.current_rserver_net_location = "%s:%d" % (rs, rsp)
             self.logger.log("Done.\n")
-        except:
+        except Exception as e:
+            LOG.exception(e)
             self.rserver_socket_closed = 1
             self.logger.log("Failed.\n")
             self.exit()
@@ -743,6 +780,7 @@ class proxy_HTTP_Client:
 
         # we don't have proxy then we have to connect server by ourselves
         rs, rsp = self.client_head_obj.get_http_server()
+        LOG.info("connecting remote server: %s:%d", rs, rsp)
 
         self.logger.log("(%s:%d)..." % (rs, rsp))
 
@@ -753,7 +791,8 @@ class proxy_HTTP_Client:
             self.rserver_socket_closed = 0
             self.current_rserver_net_location = "%s:%d" % (rs, rsp)
             self.logger.log("Done.\n")
-        except:
+        except Exception as e:
+            LOG.exception(e)
             self.rserver_socket_closed = 1
             self.logger.log("Failed.\n")
             self.exit()
@@ -761,6 +800,7 @@ class proxy_HTTP_Client:
 
     def close_rserver(self):
         ""
+        LOG.info("close proxy server")
         self.logger.log("*** Closing connection to the remote server...")
         self.rserver_socket.close()
         self.rserver_socket_closed = 1
@@ -769,6 +809,7 @@ class proxy_HTTP_Client:
 
     def close_client(self):
         ""
+        LOG.info("close client")
         self.logger.log("*** Closing connection to the client...")
         self.client_socket.close()
         self.client_socket_closed = 1
@@ -777,6 +818,7 @@ class proxy_HTTP_Client:
     def auth_407(self):
         ""
         auth = self.rserver_head_obj.get_param_values("Proxy-Authenticate")
+        LOG.info("auth_407: %s", auth)
         upper_auth = []
         msg = ""
         for i in auth:

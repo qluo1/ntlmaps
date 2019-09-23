@@ -16,17 +16,22 @@
 # Free Software Foundation, Inc.,
 # 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.
 #
+# here is no difference between \r\n and \015\012.
+# https://stackoverflow.com/questions/5446788/difference-between-015-012-and-r-n
 
-import string, urlparse
+import string
+import urlparse
+import logging
 
-http_debug_file_name = 'http.debug'
+http_debug_file_name = "http.debug"
+
+LOG = logging.getLogger(__name__)
 
 
-#-----------------------------------------------------------------------
 # tests client's header for correctness
 def test_client_http_header(header_str):
     ""
-    request = string.split(header_str, '\012')[0]
+    request = string.split(header_str, "\012")[0]
     parts = string.split(request)
 
     # we have to have at least 3 words in the request
@@ -37,11 +42,10 @@ def test_client_http_header(header_str):
         return 1
 
 
-#-----------------------------------------------------------------------
 # tests server's response header for correctness
 def test_server_http_header(header_str):
     ""
-    response = string.split(header_str, '\012')[0]
+    response = string.split(header_str, "\012")[0]
     parts = string.split(response)
 
     # we have to have at least 2 words in the response
@@ -52,50 +56,47 @@ def test_server_http_header(header_str):
         return 1
 
 
-#-----------------------------------------------------------------------
 def extract_http_header_str(buffer):
     ""
     # let's remove possible leading newlines
     t = string.lstrip(buffer)
 
     # searching for the RFC header's end
-    delimiter = '\015\012\015\012'
+    delimiter = "\015\012\015\012"
     header_end = string.find(t, delimiter)
 
     if header_end < 0:
         # may be it is defective header made by junkbuster
-        delimiter = '\012\012'
+        delimiter = "\012\012"
         header_end = string.find(t, delimiter)
 
     if header_end >= 0:
         # we have found it, possibly
         ld = len(delimiter)
-        header_str = t[0:header_end + ld]
+        header_str = t[0 : header_end + ld]
 
         # Let's check if it is a proper header
-        if test_server_http_header(header_str) or test_client_http_header(
-                header_str):
+        if test_server_http_header(header_str) or test_client_http_header(header_str):
             # if yes then let's do our work
             if (header_end + ld) >= len(t):
-                rest_str = ''
+                rest_str = ""
             else:
-                rest_str = t[header_end + ld:]
+                rest_str = t[header_end + ld :]
         else:
             # if not then let's leave the buffer as it is
             # NOTE: if there is some junk before right header we will never
             # find that header. Till timeout, I think. Not that good solution.
-            header_str = ''
+            header_str = ""
             rest_str = buffer
 
     else:
         # there is no complete header in the buffer
-        header_str = ''
+        header_str = ""
         rest_str = buffer
 
     return (header_str, rest_str)
 
 
-#-----------------------------------------------------------------------
 def extract_server_header(buffer):
     ""
     header_str, rest_str = extract_http_header_str(buffer)
@@ -107,7 +108,6 @@ def extract_server_header(buffer):
     return (header_obj, rest_str)
 
 
-#-----------------------------------------------------------------------
 def extract_client_header(buffer):
     ""
     header_str, rest_str = extract_http_header_str(buffer)
@@ -119,37 +119,34 @@ def extract_client_header(buffer):
     return (header_obj, rest_str)
 
 
-#-----------------------------------------------------------------------
 def capitalize_value_name(str):
     ""
-    tl = string.split(str, '-')
+    tl = string.split(str, "-")
     for i in range(len(tl)):
         tl[i] = string.capitalize(tl[i])
 
-    return string.join(tl, '-')
+    return string.join(tl, "-")
 
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # some helper classes
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 class HTTP_HEAD:
     ""
-    pass
 
-    #-------------------------------
     def __init__(self, head_str):
         ""
-        self.head_source = ''
+        self.head_source = ""
         self.params = None
         self.fields = None
         self.order_list = []
 
         self.head_source = head_str
         head_str = string.strip(head_str)
-        records = string.split(head_str, '\012')
+        records = string.split(head_str, "\012")
 
         # Dealing with response line
-        #fields = string.split(records[0], ' ', 2)
+        # fields = string.split(records[0], ' ', 2)
         t = string.split(string.strip(records[0]))
         fields = t[:2] + [string.join(t[2:])]
 
@@ -161,28 +158,28 @@ class HTTP_HEAD:
         params = {}
         order_list = []
         for i in records[1:]:
-            parts = string.split(string.strip(i), ':', 1)
+            parts = string.split(string.strip(i), ":", 1)
             pname = string.lower(string.strip(parts[0]))
             if not params.has_key(pname):
                 params[pname] = []
                 order_list.append(string.lower(pname))
             try:
                 params[pname].append(string.strip(parts[1]))
-            except:
+            except Exception as e:
+                LOG.exception(e)
                 msg = "ERROR: Exception in head parsing. ValueName: '%s'" % pname
-                #print msg
+                # print msg
                 self.debug(msg)
 
         self.params = params
         self.order_list = order_list
 
-    #-------------------------------
     def debug(self, message):
         ""
         try:
-            f = open(http_debug_file_name, 'a')
+            f = open(http_debug_file_name, "a")
             f.write(message)
-            f.write('\n=====\n')
+            f.write("\n=====\n")
             f.write(self.head_source)
             f.close()
         except IOError:
@@ -190,147 +187,130 @@ class HTTP_HEAD:
             # Yes, yes, I know, this is just sweeping it under the rug...
             # TODO: implement a persistent filehandle for logging debug messages to.
 
-    #-------------------------------
     def copy(self):
         ""
         import copy
+
         return copy.deepcopy(self)
 
-    #-------------------------------
     def get_param_values(self, param_name):
         ""
         param_name = string.lower(param_name)
-        if self.params.has_key(param_name):
+        if param_name in self.params:
             return self.params[param_name]
         else:
             return []
 
-    #-------------------------------
     def del_param(self, param_name):
         ""
         param_name = string.lower(param_name)
-        if self.params.has_key(param_name): del self.params[param_name]
+        if param_name in self.params:
+            del self.params[param_name]
 
-    #-------------------------------
     def has_param(self, param_name):
         ""
         param_name = string.lower(param_name)
-        return self.params.has_key(param_name)
+        return param_name in self.params
 
-    #-------------------------------
     def add_param_value(self, param_name, value):
         ""
         param_name = string.lower(param_name)
-        if not self.params.has_key(param_name):
+        if param_name not in self.params:
             self.params[param_name] = []
         if param_name not in self.order_list:
             self.order_list.append(param_name)
         self.params[param_name].append(value)
 
-    #-------------------------------
     def replace_param_value(self, param_name, value):
         ""
         self.del_param(param_name)
         self.add_param_value(param_name, value)
 
-    #-------------------------------
-    def __repr__(self, delimiter='\n'):
+    def __repr__(self, delimiter="\n"):
         ""
-        res = ''
-        cookies = ''
-        res = string.join(self.fields, ' ') + '\n'
+        res = ""
+        cookies = ""
+        res = string.join(self.fields, " ") + "\n"
 
         for i in self.order_list:
-            if self.params.has_key(i):
-                if i == 'cookie':
+            if i in self.params:
+                if i == "cookie":
                     for k in self.params[i]:
-                        cookies = cookies + capitalize_value_name(
-                            i) + ': ' + k + '\n'
+                        cookies = cookies + capitalize_value_name(i) + ": " + k + "\n"
                 else:
                     for k in self.params[i]:
-                        res = res + capitalize_value_name(i) + ': ' + k + '\n'
+                        res = res + capitalize_value_name(i) + ": " + k + "\n"
         res = res + cookies
-        res = res + '\n'
+        res = res + "\n"
 
         return res
 
-    #-------------------------------
     def send(self, socket):
         ""
-        #"""
-        res = ''
-        cookies = ''
-        res = string.join(self.fields, ' ') + '\015\012'
+        res = ""
+        cookies = ""
+        res = string.join(self.fields, " ") + "\015\012"
 
         for i in self.order_list:
-            if self.params.has_key(i):
-                if i == 'cookie':
+            if i in self.params:
+                if i == "cookie":
                     for k in self.params[i]:
-                        cookies = cookies + capitalize_value_name(
-                            i) + ': ' + k + '\015\012'
+                        cookies = (
+                            cookies + capitalize_value_name(i) + ": " + k + "\015\012"
+                        )
                 else:
                     for k in self.params[i]:
-                        res = res + capitalize_value_name(
-                            i) + ': ' + k + '\015\012'
+                        res = res + capitalize_value_name(i) + ": " + k + "\015\012"
         res = res + cookies
-        res = res + '\015\012'
-        #"""
-        #res = self.__repr__('\015\012')
+        res = res + "\015\012"
+        # """
+        # res = self.__repr__('\015\012')
         # NOTE!!! 0.9.1 worked, 0.9.5 and 0.9.7 did not with MSN Messenger.
         # We had problem here that prevent MSN Messenger from working.
         # Some work is needed to make __rerp__ working instead of current code..
         try:
-            #socket.send(self.head_source)
+            # socket.send(self.head_source)
+            LOG.info("send http header: \n%s", res)
             socket.send(res)
-            # self.debug(res)
+            self.debug(res)
             return 1
-        except:
+        except Exception as e:
+            LOG.exception(e)
             return 0
 
 
-#-----------------------------------------------------------------------
 class HTTP_SERVER_HEAD(HTTP_HEAD):
-
-    #-------------------------------
     def get_http_version(self):
         ""
         return self.fields[0]
 
-    #-------------------------------
     def get_http_code(self):
         ""
         return self.fields[1]
 
-    #-------------------------------
     def get_http_message(self):
         ""
         return self.fields[2]
 
 
-#-----------------------------------------------------------------------
 class HTTP_CLIENT_HEAD(HTTP_HEAD):
-
-    #-------------------------------
     def get_http_version(self):
         ""
         return self.fields[2]
 
-    #-------------------------------
     def get_http_method(self):
         ""
         return self.fields[0]
 
-    #-------------------------------
     def get_http_url(self):
         ""
         return self.fields[1]
 
-    #-------------------------------
     def set_http_url(self, new_url):
         ""
         self.fields[1] = new_url
 
-    #-------------------------------
+    # -------------------------------
     # There is some problem with www request header...
     # not all servers want to answer to requests with full url in request
     # but want have net location in 'Host' value and path in url.
@@ -338,12 +318,11 @@ class HTTP_CLIENT_HEAD(HTTP_HEAD):
         ""
         url_tuple = urlparse.urlparse(self.get_http_url())
         net_location = url_tuple[1]
-        self.replace_param_value('Host', net_location)
+        self.replace_param_value("Host", net_location)
 
-        path = urlparse.urlunparse(tuple(['', ''] + list(url_tuple[2:])))
+        path = urlparse.urlunparse(tuple(["", ""] + list(url_tuple[2:])))
         self.set_http_url(path)
 
-    #-------------------------------
     def get_http_server(self):
         ""
         # trying to get host from url
@@ -352,17 +331,17 @@ class HTTP_CLIENT_HEAD(HTTP_HEAD):
 
         # if there was no host in url then get it from 'Host' value
         if not net_location:
-            net_location = self.get_param_values('Host')[0]
+            net_location = self.get_param_values("Host")[0]
 
         if not net_location:
-            net_location = 'localhost'
+            net_location = "localhost"
 
         # trying to parse user:passwd@www.some.domain:8080
         # is it needed?
-        if '@' in net_location:
-            cred, net_location = string.split(net_location, '@')
-        if ':' in net_location:
-            server, port = string.split(net_location, ':')
+        if "@" in net_location:
+            cred, net_location = string.split(net_location, "@")
+        if ":" in net_location:
+            server, port = string.split(net_location, ":")
             port = int(port)
         else:
             server = net_location
